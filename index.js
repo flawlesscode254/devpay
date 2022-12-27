@@ -118,9 +118,6 @@ app.post("/stk_callback", async (req, res) => {
       better.ResultDesc === "The service request is processed successfully."
     ) {
       let transactionId = better.MerchantRequestID;
-      const record = {
-        message: "Completed successfully",
-      };
       await db
         .collection("pay")
         .doc(transactionId)
@@ -129,21 +126,21 @@ app.post("/stk_callback", async (req, res) => {
           if (doc.exists) {
           } else {
             await db.collection("pay").doc(transactionId).set({
-              data: record,
+              message: better.ResultDesc,
             });
           }
         });
     } else {
+      let transactionId = better.MerchantRequestID;
       await db
         .collection("pay")
-        .doc(CRref)
+        .doc(transactionId)
         .get()
         .then(async (doc) => {
           if (doc.exists) {
           } else {
-            await db.collection("pay").doc(CRref).set({
-              data: better.ResultDesc,
-              time: firebase.firestore.FieldValue.serverTimestamp(),
+            await db.collection("pay").doc(transactionId).set({
+              message: better.ResultDesc,
             });
           }
         });
