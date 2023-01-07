@@ -62,8 +62,12 @@ const getAccessToken = async (req, res, next) => {
     });
 };
 
+let transactionIDRef;
+
 app.post("/stk", getAccessToken, async (req, res) => {
-  let { phone_number, cash } = req.body;
+  let { phone_number, cash, transactionID } = req.body;
+
+  transactionIDRef = transactionID;
 
   const date = new Date();
   const timestamp =
@@ -113,37 +117,16 @@ app.post("/stk", getAccessToken, async (req, res) => {
 
 app.post("/stk_callback", async (req, res) => {
   let better = req.body.Body.stkCallback;
-  if (better) {
-    if (
-      better.ResultDesc === "The service request is processed successfully."
-    ) {
-      let transactionId = better.MerchantRequestID;
-      await db
-        .collection("pay")
-        .doc(transactionId)
-        .get()
-        .then(async (doc) => {
-          if (doc.exists) {
-          } else {
-            await db.collection("pay").doc(transactionId).set({
-              message: better.ResultDesc,
-            });
-          }
+  await db
+    .collection("status")
+    .doc(transactionIDRef)
+    .get()
+    .then(async (doc) => {
+      if (doc.exists) {
+      } else {
+        await db.collection("status").doc(transactionIDRef).set({
+          message: better.ResultDesc,
         });
-    } else {
-      let transactionId = better.MerchantRequestID;
-      await db
-        .collection("pay")
-        .doc(transactionId)
-        .get()
-        .then(async (doc) => {
-          if (doc.exists) {
-          } else {
-            await db.collection("pay").doc(transactionId).set({
-              message: better.ResultDesc,
-            });
-          }
-        });
-    }
-  }
+      }
+    });
 });
